@@ -5,16 +5,16 @@
  * //
  * 
  * // controllers/PostsController.php:
- * 
+ *
  * namespace blog\controllers;
- * 
+ *
  * class PostsController extends Base {
- * 
+ *
  * 	public $resources = array();
- * 
+ *
  * 	protected function _init() {
  * 		parent::_init();
- * 
+ *
  * 		$this->resources = array(
  * 			'index' => array(
  * 				'posts' => array('required' => false, 'find' => array(
@@ -24,24 +24,24 @@
  * 			'view' => array('post' => 'id')
  * 		);
  * 	}
- * 
+ *
  * 	public function index($posts) {
  * 		if (!count($posts)) {
  * 			return $this->redirect('Posts::add');
  * 		}
  * 		return compact('posts');
  * 	}
- * 
+ *
  * 	public function view($post) {
  * 		return compact('post');
  * 	}
  * }
- * 
+ *
  * // config/bootstrap/action.php:
- * 
+ *
  * use lithium\action\Dispatcher;
  * use li3_resources\net\http\Resources;
- * 
+ *
  * Dispatcher::applyFilter('_call', function($self, $params, $chain) {
  * 	if (!isset($params['callable']->resources)) {
  * 		return $chain->next($self, $params, $chain);
@@ -59,9 +59,7 @@ use lithium\util\Set;
 use lithium\core\Libraries;
 use lithium\util\Inflector;
 use lithium\action\DispatchException; // @todo ResourceNotFoundException?
-use lithium\core\ClassNotFoundException;
-// @todo When implemented for real, it should probably be an UnmappedResourceException
-// (code 400: Bad Request) or something.
+use li3_resources\action\UnmappedResourceException;
 
 class Resources extends \lithium\core\StaticObject {
 
@@ -71,7 +69,7 @@ class Resources extends \lithium\core\StaticObject {
 			$request = $params['params'];
 			$defaults = array(
 				null,
-				'find' => array('first'),
+				'method' => array('first'),
 				'required' => true,
 				'params' => array(),
 				'in' => null
@@ -109,11 +107,11 @@ class Resources extends \lithium\core\StaticObject {
 	protected static function _queryCollection($data, $name, array $resource, array $conditions) {
 		$defaults = array(
 			'model' => null,
-			'find' => array('first'),
+			'method' => array('first'),
 			'required' => false
 		);
 		$resource += $defaults;
-		$resource['find'] += $defaults['find'];
+		$resource['method'] += $defaults['method'];
 		list($parent, $field) = explode('.', $resource['in'], 2);
 
 		if (!isset($data[$parent]) || !isset($data[$parent]->{$field})) {
@@ -150,7 +148,7 @@ class Resources extends \lithium\core\StaticObject {
 			$resource = $params['resource'];
 
 			if (!$resource['model'] || !class_exists($model = $resource['model'])) {
-				throw new ClassNotFoundException("Could not find resource-mapped model class.");
+				throw new UnmappedResourceException("Could not find resource-mapped model class.");
 			}
 			$query  = $resource['find'];
 			$method = $query[0];

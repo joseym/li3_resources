@@ -18,7 +18,7 @@ abstract class Resource extends \lithium\core\Object {
 
 	protected $_binding;
 
-	protected $_requestBinding;
+	protected $_request;
 
 	protected $_methods = array(
 		'GET'    => array('view'   => 'id', 'index' => null),
@@ -28,16 +28,23 @@ abstract class Resource extends \lithium\core\Object {
 		'DELETE' => array('delete' => 'id')
 	);
 
+	protected $_classes = array(
+		'entity' => 'lithium\data\Entity'
+	);
+
 	public function index($resources) {
-		
+		return array($this->_name() => $resources);
 	}
 
 	public function add($resource) {
-		
+		if ($data = $this->_request()->data) {
+			$resource->save($data);
+		}
+		return array(Inflector::singularize($this->_name()) => $resource);
 	}
 
 	public function view($resource) {
-		
+		return array(Inflector::singularize($this->_name()) => $resource);
 	}
 
 	public function edit($resource) {
@@ -52,7 +59,7 @@ abstract class Resource extends \lithium\core\Object {
 		if ($this->_binding) {
 			return $this->_binding;
 		}
-		return ($this->_binding = Libraries::locate('resource', $this->_name()));
+		return ($this->_binding = Libraries::locate('model', $this->_name()));
 	}
 
 	protected function _name() {
@@ -60,7 +67,7 @@ abstract class Resource extends \lithium\core\Object {
 	}
 
 	protected function _request() {
-		$call = $this->_requestBinding;
+		$call = $this->_request;
 		return $call();
 	}
 
@@ -90,10 +97,12 @@ abstract class Resource extends \lithium\core\Object {
 	}
 
 	public function __invoke($request) {
-		$this->_requestBinding = function() use (&$request) {
+		$this->_request = function() use (&$request) {
 			return $request;
 		};
 		$method = $this->_method($request);
+		var_dump(compact('method'));
+		die();
 	}
 }
 
